@@ -1,5 +1,7 @@
 package com.crazerium.infohud.client.screen;
 
+import com.crazerium.infohud.client.InfoHudOverlay;
+import com.crazerium.infohud.client.layout.HudAnchor;
 import com.crazerium.infohud.config.ClientConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -11,9 +13,12 @@ import java.util.Locale;
 
 public final class InfoHudConfigScreen extends Screen {
 
-    private static final int BUTTON_WIDTH = 150;
+    private static final int BUTTON_WIDTH = 170;
     private static final int BUTTON_HEIGHT = 20;
     private static final int ROW_SPACING = 24;
+
+    private static final int PRESET_WIDTH = 104;
+    private static final int PRESET_GAP = 4;
 
     private final Screen parent;
 
@@ -32,9 +37,11 @@ public final class InfoHudConfigScreen extends Screen {
 
         int centerX = this.width / 2;
 
-        this.xRowY = 38;
-        this.yRowY = 64;
-        this.scaleRowY = 90;
+        addPresetButtons(centerX, 46);
+
+        this.xRowY = 78;
+        this.yRowY = 104;
+        this.scaleRowY = 130;
 
         addAdjustmentButtons(
                 centerX,
@@ -59,7 +66,7 @@ public final class InfoHudConfigScreen extends Screen {
 
         int leftX = centerX - BUTTON_WIDTH - 5;
         int rightX = centerX + 5;
-        int startY = 125;
+        int startY = 164;
 
         addToggle(
                 leftX,
@@ -92,61 +99,89 @@ public final class InfoHudConfigScreen extends Screen {
         addToggle(
                 leftX,
                 startY + ROW_SPACING * 2,
-                "Show memory",
-                ClientConfig.SHOW_MEMORY
+                "Show TPS and MSPT",
+                ClientConfig.SHOW_TPS
         );
 
         addToggle(
                 rightX,
                 startY + ROW_SPACING * 2,
+                "Show client RAM",
+                ClientConfig.SHOW_MEMORY
+        );
+
+        addToggle(
+                leftX,
+                startY + ROW_SPACING * 3,
+                "Show server RAM",
+                ClientConfig.SHOW_SERVER_MEMORY
+        );
+
+        addToggle(
+                rightX,
+                startY + ROW_SPACING * 3,
                 "Show position",
                 ClientConfig.SHOW_POSITION
         );
 
         addToggle(
                 leftX,
-                startY + ROW_SPACING * 3,
+                startY + ROW_SPACING * 4,
                 "Show facing",
                 ClientConfig.SHOW_FACING
         );
 
         addToggle(
                 rightX,
-                startY + ROW_SPACING * 3,
+                startY + ROW_SPACING * 4,
                 "Show dimension",
                 ClientConfig.SHOW_DIMENSION
         );
 
         addToggle(
                 leftX,
-                startY + ROW_SPACING * 4,
+                startY + ROW_SPACING * 5,
                 "Show biome",
                 ClientConfig.SHOW_BIOME
         );
 
         addToggle(
                 rightX,
-                startY + ROW_SPACING * 4,
+                startY + ROW_SPACING * 5,
                 "Show light",
                 ClientConfig.SHOW_LIGHT
         );
 
         addToggle(
                 leftX,
-                startY + ROW_SPACING * 5,
+                startY + ROW_SPACING * 6,
                 "Show world time",
                 ClientConfig.SHOW_WORLD_TIME
         );
 
         addToggle(
                 rightX,
-                startY + ROW_SPACING * 5,
+                startY + ROW_SPACING * 6,
+                "Show play time",
+                ClientConfig.SHOW_PLAY_TIME
+        );
+
+        addToggle(
+                leftX,
+                startY + ROW_SPACING * 7,
                 "Show session",
                 ClientConfig.SHOW_SESSION
         );
 
+        addToggle(
+                rightX,
+                startY + ROW_SPACING * 7,
+                "Show jumps",
+                ClientConfig.SHOW_JUMPS
+        );
+
         int bottomY = Math.min(
-                startY + ROW_SPACING * 6 + 10,
+                startY + ROW_SPACING * 8 + 10,
                 this.height - 28
         );
 
@@ -177,6 +212,56 @@ public final class InfoHudConfigScreen extends Screen {
                         )
                         .build()
         );
+    }
+
+    private void addPresetButtons(
+            int centerX,
+            int y
+    ) {
+        HudAnchor[] anchors = {
+                HudAnchor.TOP_LEFT,
+                HudAnchor.TOP_CENTER,
+                HudAnchor.TOP_RIGHT,
+                HudAnchor.BOTTOM_LEFT,
+                HudAnchor.BOTTOM_RIGHT
+        };
+
+        String[] names = {
+                "Top left",
+                "Top center",
+                "Top right",
+                "Bottom left",
+                "Bottom right"
+        };
+
+        int totalWidth =
+                PRESET_WIDTH * anchors.length
+                        + PRESET_GAP * (anchors.length - 1);
+
+        int startX = centerX - totalWidth / 2;
+
+        for (int index = 0; index < anchors.length; index++) {
+            HudAnchor anchor = anchors[index];
+            String name = names[index];
+
+            this.addRenderableWidget(
+                    Button.builder(
+                                    Component.translatable(name),
+                                    button -> {
+                                        ClientConfig.ANCHOR.set(anchor);
+                                    }
+                            )
+                            .bounds(
+                                    startX
+                                            + index
+                                            * (PRESET_WIDTH + PRESET_GAP),
+                                    y,
+                                    PRESET_WIDTH,
+                                    BUTTON_HEIGHT
+                            )
+                            .build()
+            );
+        }
     }
 
     private void addAdjustmentButtons(
@@ -222,13 +307,21 @@ public final class InfoHudConfigScreen extends Screen {
     ) {
         this.addRenderableWidget(
                 Button.builder(
-                                toggleLabel(name, configValue.get()),
+                                toggleLabel(
+                                        name,
+                                        configValue.get()
+                                ),
                                 button -> {
-                                    boolean newValue = !configValue.get();
+                                    boolean newValue =
+                                            !configValue.get();
 
                                     configValue.set(newValue);
+
                                     button.setMessage(
-                                            toggleLabel(name, newValue)
+                                            toggleLabel(
+                                                    name,
+                                                    newValue
+                                            )
                                     );
                                 }
                         )
@@ -256,26 +349,44 @@ public final class InfoHudConfigScreen extends Screen {
     }
 
     private static void changeX(int amount) {
-        int value = ClientConfig.X.get() + amount;
+        InfoHudOverlay.switchToCustomPosition();
+
+        int value =
+                ClientConfig.X.get() + amount;
 
         ClientConfig.X.set(
-                Math.max(0, Math.min(10000, value))
+                Math.max(
+                        0,
+                        Math.min(10000, value)
+                )
         );
     }
 
     private static void changeY(int amount) {
-        int value = ClientConfig.Y.get() + amount;
+        InfoHudOverlay.switchToCustomPosition();
+
+        int value =
+                ClientConfig.Y.get() + amount;
 
         ClientConfig.Y.set(
-                Math.max(0, Math.min(10000, value))
+                Math.max(
+                        0,
+                        Math.min(10000, value)
+                )
         );
     }
 
     private static void changeScale(double amount) {
-        double value = ClientConfig.SCALE.get() + amount;
+        double value =
+                ClientConfig.SCALE.get() + amount;
 
-        value = Math.max(0.5D, Math.min(3.0D, value));
-        value = Math.round(value * 10.0D) / 10.0D;
+        value = Math.max(
+                0.5D,
+                Math.min(3.0D, value)
+        );
+
+        value =
+                Math.round(value * 10.0D) / 10.0D;
 
         ClientConfig.SCALE.set(value);
     }
@@ -284,20 +395,25 @@ public final class InfoHudConfigScreen extends Screen {
         ClientConfig.X.set(4);
         ClientConfig.Y.set(4);
         ClientConfig.SCALE.set(1.0D);
+        ClientConfig.ANCHOR.set(HudAnchor.TOP_LEFT);
 
         ClientConfig.SHOW_ICONS.set(true);
         ClientConfig.TEXT_SHADOW.set(true);
 
         ClientConfig.SHOW_PLAYER_FPS.set(true);
         ClientConfig.SHOW_PING.set(true);
+        ClientConfig.SHOW_TPS.set(true);
         ClientConfig.SHOW_MEMORY.set(true);
+        ClientConfig.SHOW_SERVER_MEMORY.set(true);
         ClientConfig.SHOW_POSITION.set(true);
         ClientConfig.SHOW_FACING.set(true);
         ClientConfig.SHOW_DIMENSION.set(true);
         ClientConfig.SHOW_BIOME.set(true);
         ClientConfig.SHOW_LIGHT.set(true);
         ClientConfig.SHOW_WORLD_TIME.set(true);
+        ClientConfig.SHOW_PLAY_TIME.set(true);
         ClientConfig.SHOW_SESSION.set(true);
+        ClientConfig.SHOW_JUMPS.set(true);
 
         if (this.minecraft != null) {
             this.minecraft.setScreen(
@@ -314,6 +430,19 @@ public final class InfoHudConfigScreen extends Screen {
         if (this.minecraft != null) {
             this.minecraft.setScreen(this.parent);
         }
+    }
+
+    private static String anchorName(
+            HudAnchor anchor
+    ) {
+        return switch (anchor) {
+            case CUSTOM -> "Custom";
+            case TOP_LEFT -> "Top left";
+            case TOP_CENTER -> "Top center";
+            case TOP_RIGHT -> "Top right";
+            case BOTTOM_LEFT -> "Bottom left";
+            case BOTTOM_RIGHT -> "Bottom right";
+        };
     }
 
     @Override
@@ -334,14 +463,35 @@ public final class InfoHudConfigScreen extends Screen {
                 this.font,
                 this.title,
                 this.width / 2,
-                15,
+                10,
+                0xFFFFFFFF
+        );
+
+        Component presetText =
+                Component.translatable("Position preset")
+                        .append(": ")
+                        .append(
+                                Component.translatable(
+                                        anchorName(
+                                                ClientConfig.ANCHOR.get()
+                                        )
+                                )
+                        );
+
+        guiGraphics.drawCenteredString(
+                this.font,
+                presetText,
+                this.width / 2,
+                28,
                 0xFFFFFFFF
         );
 
         guiGraphics.drawCenteredString(
                 this.font,
                 Component.translatable("Position X")
-                        .append(": " + ClientConfig.X.get()),
+                        .append(
+                                ": " + ClientConfig.X.get()
+                        ),
                 this.width / 2,
                 this.xRowY + 6,
                 0xFFFFFFFF
@@ -350,7 +500,9 @@ public final class InfoHudConfigScreen extends Screen {
         guiGraphics.drawCenteredString(
                 this.font,
                 Component.translatable("Position Y")
-                        .append(": " + ClientConfig.Y.get()),
+                        .append(
+                                ": " + ClientConfig.Y.get()
+                        ),
                 this.width / 2,
                 this.yRowY + 6,
                 0xFFFFFFFF

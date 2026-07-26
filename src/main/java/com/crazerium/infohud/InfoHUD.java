@@ -1,6 +1,7 @@
 package com.crazerium.infohud;
 
 import com.crazerium.infohud.config.ClientConfig;
+import com.crazerium.infohud.network.ModNetwork;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -16,5 +17,7 @@ public final class InfoHUD {
                 ClientConfig.SPEC,
                 "infohud-client.toml"
         );
+
+        ModNetwork.register();
     }
 }
