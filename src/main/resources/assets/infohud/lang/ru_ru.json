@@ -1,4 +1,28 @@
 {
   "Toggle InfoHUD": "Показать или скрыть InfoHUD",
-  "InfoHUD": "InfoHUD"
+  "Open InfoHUD settings": "Открыть настройки InfoHUD",
+  "InfoHUD": "InfoHUD",
+
+  "HUD Settings": "Настройки InfoHUD",
+  "Position X": "Позиция X",
+  "Position Y": "Позиция Y",
+  "Scale": "Масштаб",
+
+  "Show icons": "Показывать иконки",
+  "Text shadow": "Тень текста",
+  "Show player and FPS": "Игрок и FPS",
+  "Show ping": "Показывать пинг",
+  "Show memory": "Показывать память",
+  "Show position": "Показывать координаты",
+  "Show facing": "Показывать направление",
+  "Show dimension": "Показывать измерение",
+  "Show biome": "Показывать биом",
+  "Show light": "Показывать освещение",
+  "Show world time": "Показывать время мира",
+  "Show session": "Показывать время сессии",
+
+  "On": "Вкл",
+  "Off": "Выкл",
+  "Reset": "Сбросить",
+  "Done": "Готово"
 }

@@ -1,4 +1,28 @@
 {
   "Toggle InfoHUD": "Toggle InfoHUD",
-  "InfoHUD": "InfoHUD"
+  "Open InfoHUD settings": "Open InfoHUD settings",
+  "InfoHUD": "InfoHUD",
+
+  "HUD Settings": "InfoHUD Settings",
+  "Position X": "Position X",
+  "Position Y": "Position Y",
+  "Scale": "Scale",
+
+  "Show icons": "Show icons",
+  "Text shadow": "Text shadow",
+  "Show player and FPS": "Show player and FPS",
+  "Show ping": "Show ping",
+  "Show memory": "Show memory",
+  "Show position": "Show position",
+  "Show facing": "Show facing",
+  "Show dimension": "Show dimension",
+  "Show biome": "Show biome",
+  "Show light": "Show light",
+  "Show world time": "Show world time",
+  "Show session": "Show session",
+
+  "On": "On",
+  "Off": "Off",
+  "Reset": "Reset",
+  "Done": "Done"
 }

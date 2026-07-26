@@ -1,5 +1,6 @@
 package com.crazerium.infohud.client;
 
+import com.crazerium.infohud.config.ClientConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -19,13 +20,6 @@ import java.util.List;
 import java.util.Locale;
 
 public final class InfoHudOverlay {
-
-    private static final int X = 4;
-    private static final int Y = 4;
-    private static final int LINE_HEIGHT = 16;
-    private static final int TEXT_X_OFFSET = 20;
-    private static final int TEXT_Y_OFFSET = 4;
-
     private static boolean visible = true;
 
     private static ClientLevel sessionLevel;
@@ -80,33 +74,44 @@ public final class InfoHudOverlay {
 
                 List<HudLine> lines = new ArrayList<>();
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_PLAYER_FPS.get(),
                         Items.EXPERIENCE_BOTTLE,
                         playerLine(
                                 minecraft.player.getGameProfile().getName(),
                                 fps
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_PING.get(),
                         Items.GRAY_CONCRETE,
                         valueLine(
                                 "Ping: ",
                                 ping >= 0 ? ping + " ms" : "N/A",
-                                ping >= 0 ? lowIsGoodColor(ping, 100, 200) : ChatFormatting.GRAY
+                                ping >= 0
+                                        ? lowIsGoodColor(ping, 100, 200)
+                                        : ChatFormatting.GRAY
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_MEMORY.get(),
                         Items.CHEST,
                         valueLine(
                                 "Memory: ",
-                                usedMemory + "/" + maxMemory + " MB (" + memoryPercent + "%)",
+                                usedMemory + "/" + maxMemory
+                                        + " MB (" + memoryPercent + "%)",
                                 lowIsGoodColor(memoryPercent, 69, 84)
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_POSITION.get(),
                         Items.COMPASS,
                         valueLine(
                                 "Pos: ",
@@ -117,82 +122,121 @@ public final class InfoHudOverlay {
                                         + position.getZ(),
                                 ChatFormatting.AQUA
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_FACING.get(),
                         Items.RECOVERY_COMPASS,
                         valueLine(
                                 "Facing: ",
                                 formatDirection(minecraft.player.getDirection()),
                                 ChatFormatting.YELLOW
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_DIMENSION.get(),
                         Items.ENDER_EYE,
                         valueLine(
                                 "Dimension: ",
                                 dimension,
                                 ChatFormatting.GOLD
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_BIOME.get(),
                         Items.GRASS_BLOCK,
                         valueLine(
                                 "Biome: ",
                                 biome,
                                 ChatFormatting.GREEN
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_LIGHT.get(),
                         Items.TORCH,
                         valueLine(
                                 "Light: ",
                                 Integer.toString(lightLevel),
                                 highIsGoodColor(lightLevel, 8, 4)
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_WORLD_TIME.get(),
                         Items.CLOCK,
                         valueLine(
                                 "World Time: ",
                                 formatWorldTime(worldTime),
                                 ChatFormatting.GOLD
                         )
-                ));
+                );
 
-                lines.add(line(
+                addLine(
+                        lines,
+                        ClientConfig.SHOW_SESSION.get(),
                         Items.SPYGLASS,
                         valueLine(
                                 "Session: ",
                                 formatSessionTime(),
                                 ChatFormatting.LIGHT_PURPLE
                         )
-                ));
+                );
 
-                int currentY = Y;
+                boolean showIcons = ClientConfig.SHOW_ICONS.get();
+                boolean textShadow = ClientConfig.TEXT_SHADOW.get();
 
-                for (HudLine line : lines) {
-                    guiGraphics.renderItem(
-                            line.icon(),
-                            X,
-                            currentY
-                    );
+                float scale = ClientConfig.SCALE.get().floatValue();
+
+                int lineHeight = showIcons ? 16 : 10;
+                int textX = showIcons ? 20 : 0;
+                int textY = showIcons ? 4 : 0;
+
+                guiGraphics.pose().pushPose();
+
+                guiGraphics.pose().translate(
+                        ClientConfig.X.get(),
+                        ClientConfig.Y.get(),
+                        0.0D
+                );
+
+                guiGraphics.pose().scale(
+                        scale,
+                        scale,
+                        1.0F
+                );
+
+                int currentY = 0;
+
+                for (HudLine hudLine : lines) {
+                    if (showIcons) {
+                        guiGraphics.renderItem(
+                                hudLine.icon(),
+                                0,
+                                currentY
+                        );
+                    }
 
                     guiGraphics.drawString(
                             minecraft.font,
-                            line.text(),
-                            X + TEXT_X_OFFSET,
-                            currentY + TEXT_Y_OFFSET,
+                            hudLine.text(),
+                            textX,
+                            currentY + textY,
                             0xFFFFFFFF,
-                            true
+                            textShadow
                     );
 
-                    currentY += LINE_HEIGHT;
+                    currentY += lineHeight;
                 }
+
+                guiGraphics.pose().popPose();
             };
 
     public static void toggleVisible() {
@@ -221,6 +265,17 @@ public final class InfoHudOverlay {
         return playerInfo != null
                 ? playerInfo.getLatency()
                 : -1;
+    }
+
+    private static void addLine(
+            List<HudLine> lines,
+            boolean enabled,
+            Item item,
+            Component text
+    ) {
+        if (enabled) {
+            lines.add(line(item, text));
+        }
     }
 
     private static HudLine line(Item item, Component text) {

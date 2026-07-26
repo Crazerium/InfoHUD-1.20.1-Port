@@ -1,6 +1,8 @@
 package com.crazerium.infohud.client;
 
 import com.crazerium.infohud.InfoHUD;
+import com.crazerium.infohud.client.screen.InfoHudConfigScreen;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -24,6 +26,14 @@ public final class ClientForgeEvents {
 
         while (ClientModEvents.TOGGLE_HUD.consumeClick()) {
             InfoHudOverlay.toggleVisible();
+        }
+
+        while (ClientModEvents.OPEN_SETTINGS.consumeClick()) {
+            Minecraft minecraft = Minecraft.getInstance();
+
+            minecraft.setScreen(
+                    new InfoHudConfigScreen(minecraft.screen)
+            );
         }
     }
 }

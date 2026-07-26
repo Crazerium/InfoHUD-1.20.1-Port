@@ -17,15 +17,21 @@ import org.lwjgl.glfw.GLFW;
         value = Dist.CLIENT
 )
 public final class ClientModEvents {
-    private static final String TOGGLE_HUD_NAME = "Toggle InfoHUD";
-    private static final String INFOHUD_CATEGORY = "InfoHUD";
 
     public static final KeyMapping TOGGLE_HUD = new KeyMapping(
-            TOGGLE_HUD_NAME,
+            "Toggle InfoHUD",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_P,
-            INFOHUD_CATEGORY
+            "InfoHUD"
+    );
+
+    public static final KeyMapping OPEN_SETTINGS = new KeyMapping(
+            "Open InfoHUD settings",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_O,
+            "InfoHUD"
     );
 
     private ClientModEvents() {
@@ -33,11 +39,15 @@ public final class ClientModEvents {
 
     @SubscribeEvent
     public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
-        event.registerAboveAll("main_hud", InfoHudOverlay.OVERLAY);
+        event.registerAboveAll(
+                "main_hud",
+                InfoHudOverlay.OVERLAY
+        );
     }
 
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(TOGGLE_HUD);
+        event.register(OPEN_SETTINGS);
     }
 }
