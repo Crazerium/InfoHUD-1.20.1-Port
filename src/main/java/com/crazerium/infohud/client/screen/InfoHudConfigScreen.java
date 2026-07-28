@@ -1,7 +1,7 @@
 package com.crazerium.infohud.client.screen;
 
-import com.crazerium.infohud.client.InfoHudOverlay;
-import com.crazerium.infohud.client.layout.HudAnchor;
+import com.crazerium.infohud.client.layout.HudElement;
+import com.crazerium.infohud.client.layout.HudLayoutManager;
 import com.crazerium.infohud.config.ClientConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -12,19 +12,16 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import java.util.Locale;
 
 public final class InfoHudConfigScreen extends Screen {
-
-    private static final int BUTTON_WIDTH = 170;
     private static final int BUTTON_HEIGHT = 20;
-    private static final int ROW_SPACING = 24;
-
-    private static final int PRESET_WIDTH = 104;
-    private static final int PRESET_GAP = 4;
+    private static final int ROW_HEIGHT = 23;
 
     private final Screen parent;
-
-    private int xRowY;
-    private int yRowY;
-    private int scaleRowY;
+    private int page;
+    private int pageCount = 1;
+    private int toggleStartY;
+    private int toggleBottomY;
+    private int columns;
+    private int rowsPerPage;
 
     public InfoHudConfigScreen(Screen parent) {
         super(Component.translatable("HUD Settings"));
@@ -34,156 +31,139 @@ public final class InfoHudConfigScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        buildWidgets();
+    }
 
+    private void buildWidgets() {
+        int margin = 8;
+        int gap = 4;
         int centerX = this.width / 2;
+        int wideButtonWidth = Math.max(140, Math.min(260, this.width - margin * 2));
 
-        addPresetButtons(centerX, 46);
-
-        this.xRowY = 78;
-        this.yRowY = 104;
-        this.scaleRowY = 130;
-
-        addAdjustmentButtons(
-                centerX,
-                this.xRowY,
-                () -> changeX(-5),
-                () -> changeX(5)
+        this.addRenderableWidget(
+                Button.builder(
+                                Component.translatable("Open layout editor"),
+                                button -> openEditor()
+                        )
+                        .bounds(
+                                centerX - wideButtonWidth / 2,
+                                25,
+                                wideButtonWidth,
+                                BUTTON_HEIGHT
+                        )
+                        .build()
         );
 
-        addAdjustmentButtons(
-                centerX,
-                this.yRowY,
-                () -> changeY(-5),
-                () -> changeY(5)
+        int scaleControlWidth = Math.max(26, Math.min(40, this.width / 8));
+        int scaleLeftX = Math.max(margin, centerX - 88);
+        int scaleRightX = Math.min(
+                this.width - margin - scaleControlWidth,
+                centerX + 88 - scaleControlWidth
+        );
+        this.addRenderableWidget(
+                Button.builder(
+                                Component.literal("-"),
+                                button -> changeScale(-0.1D)
+                        )
+                        .bounds(
+                                scaleLeftX,
+                                49,
+                                scaleControlWidth,
+                                BUTTON_HEIGHT
+                        )
+                        .build()
         );
 
-        addAdjustmentButtons(
-                centerX,
-                this.scaleRowY,
-                () -> changeScale(-0.1D),
-                () -> changeScale(0.1D)
+        this.addRenderableWidget(
+                Button.builder(
+                                Component.literal("+"),
+                                button -> changeScale(0.1D)
+                        )
+                        .bounds(
+                                scaleRightX,
+                                49,
+                                scaleControlWidth,
+                                BUTTON_HEIGHT
+                        )
+                        .build()
         );
 
-        int leftX = centerX - BUTTON_WIDTH - 5;
-        int rightX = centerX + 5;
-        int startY = 164;
+        int optionWidth = Math.max(90, Math.min(170, (this.width - margin * 2 - gap) / 2));
+        int optionsTotal = optionWidth * 2 + gap;
+        int optionsX = centerX - optionsTotal / 2;
 
         addToggle(
-                leftX,
-                startY,
+                optionsX,
+                73,
+                optionWidth,
                 "Show icons",
                 ClientConfig.SHOW_ICONS
         );
 
         addToggle(
-                rightX,
-                startY,
+                optionsX + optionWidth + gap,
+                73,
+                optionWidth,
                 "Text shadow",
                 ClientConfig.TEXT_SHADOW
         );
 
-        addToggle(
-                leftX,
-                startY + ROW_SPACING,
-                "Show player and FPS",
-                ClientConfig.SHOW_PLAYER_FPS
+        this.toggleStartY = 101;
+        this.toggleBottomY = this.height - 31;
+        this.columns = this.width >= 330 ? 2 : 1;
+        this.rowsPerPage = Math.max(
+                1,
+                (this.toggleBottomY - this.toggleStartY) / ROW_HEIGHT
         );
 
-        addToggle(
-                rightX,
-                startY + ROW_SPACING,
-                "Show ping",
-                ClientConfig.SHOW_PING
+        int itemsPerPage = Math.max(1, this.rowsPerPage * this.columns);
+        this.pageCount = Math.max(
+                1,
+                (HudElement.values().length + itemsPerPage - 1) / itemsPerPage
         );
+        this.page = Math.max(0, Math.min(this.pageCount - 1, this.page));
 
-        addToggle(
-                leftX,
-                startY + ROW_SPACING * 2,
-                "Show TPS and MSPT",
-                ClientConfig.SHOW_TPS
-        );
+        int toggleWidth = this.columns == 2
+                ? Math.max(100, (this.width - margin * 2 - gap) / 2)
+                : Math.max(140, this.width - margin * 2);
+        int toggleAreaWidth = toggleWidth * this.columns + gap * (this.columns - 1);
+        int toggleAreaX = centerX - toggleAreaWidth / 2;
+        int startIndex = this.page * itemsPerPage;
+        int endIndex = Math.min(HudElement.values().length, startIndex + itemsPerPage);
 
-        addToggle(
-                rightX,
-                startY + ROW_SPACING * 2,
-                "Show client RAM",
-                ClientConfig.SHOW_MEMORY
-        );
+        for (int index = startIndex; index < endIndex; index++) {
+            int localIndex = index - startIndex;
+            int column = localIndex % this.columns;
+            int row = localIndex / this.columns;
+            HudElement element = HudElement.values()[index];
+            addElementToggle(
+                    toggleAreaX + column * (toggleWidth + gap),
+                    this.toggleStartY + row * ROW_HEIGHT,
+                    toggleWidth,
+                    element
+            );
+        }
 
-        addToggle(
-                leftX,
-                startY + ROW_SPACING * 3,
-                "Show server RAM",
-                ClientConfig.SHOW_SERVER_MEMORY
+        int bottomY = this.height - 24;
+        int smallWidth = Math.max(28, Math.min(48, this.width / 9));
+        int actionWidth = Math.max(
+                44,
+                Math.min(
+                        100,
+                        (this.width - margin * 2 - smallWidth * 2 - gap * 3) / 2
+                )
         );
+        int totalWidth = smallWidth + gap + actionWidth + gap + actionWidth + gap + smallWidth;
+        int bottomX = centerX - totalWidth / 2;
 
-        addToggle(
-                rightX,
-                startY + ROW_SPACING * 3,
-                "Show position",
-                ClientConfig.SHOW_POSITION
-        );
-
-        addToggle(
-                leftX,
-                startY + ROW_SPACING * 4,
-                "Show facing",
-                ClientConfig.SHOW_FACING
-        );
-
-        addToggle(
-                rightX,
-                startY + ROW_SPACING * 4,
-                "Show dimension",
-                ClientConfig.SHOW_DIMENSION
-        );
-
-        addToggle(
-                leftX,
-                startY + ROW_SPACING * 5,
-                "Show biome",
-                ClientConfig.SHOW_BIOME
-        );
-
-        addToggle(
-                rightX,
-                startY + ROW_SPACING * 5,
-                "Show light",
-                ClientConfig.SHOW_LIGHT
-        );
-
-        addToggle(
-                leftX,
-                startY + ROW_SPACING * 6,
-                "Show world time",
-                ClientConfig.SHOW_WORLD_TIME
-        );
-
-        addToggle(
-                rightX,
-                startY + ROW_SPACING * 6,
-                "Show play time",
-                ClientConfig.SHOW_PLAY_TIME
-        );
-
-        addToggle(
-                leftX,
-                startY + ROW_SPACING * 7,
-                "Show session",
-                ClientConfig.SHOW_SESSION
-        );
-
-        addToggle(
-                rightX,
-                startY + ROW_SPACING * 7,
-                "Show jumps",
-                ClientConfig.SHOW_JUMPS
-        );
-
-        int bottomY = Math.min(
-                startY + ROW_SPACING * 8 + 10,
-                this.height - 28
-        );
+        Button previous = Button.builder(
+                        Component.literal("<"),
+                        button -> changePage(-1)
+                )
+                .bounds(bottomX, bottomY, smallWidth, BUTTON_HEIGHT)
+                .build();
+        previous.active = this.page > 0;
+        this.addRenderableWidget(previous);
 
         this.addRenderableWidget(
                 Button.builder(
@@ -191,9 +171,9 @@ public final class InfoHudConfigScreen extends Screen {
                                 button -> resetSettings()
                         )
                         .bounds(
-                                centerX - BUTTON_WIDTH - 5,
+                                bottomX + smallWidth + gap,
                                 bottomY,
-                                BUTTON_WIDTH,
+                                actionWidth,
                                 BUTTON_HEIGHT
                         )
                         .build()
@@ -205,96 +185,40 @@ public final class InfoHudConfigScreen extends Screen {
                                 button -> saveAndClose()
                         )
                         .bounds(
-                                centerX + 5,
+                                bottomX + smallWidth + gap + actionWidth + gap,
                                 bottomY,
-                                BUTTON_WIDTH,
-                                BUTTON_HEIGHT
-                        )
-                        .build()
-        );
-    }
-
-    private void addPresetButtons(
-            int centerX,
-            int y
-    ) {
-        HudAnchor[] anchors = {
-                HudAnchor.TOP_LEFT,
-                HudAnchor.TOP_CENTER,
-                HudAnchor.TOP_RIGHT,
-                HudAnchor.BOTTOM_LEFT,
-                HudAnchor.BOTTOM_RIGHT
-        };
-
-        String[] names = {
-                "Top left",
-                "Top center",
-                "Top right",
-                "Bottom left",
-                "Bottom right"
-        };
-
-        int totalWidth =
-                PRESET_WIDTH * anchors.length
-                        + PRESET_GAP * (anchors.length - 1);
-
-        int startX = centerX - totalWidth / 2;
-
-        for (int index = 0; index < anchors.length; index++) {
-            HudAnchor anchor = anchors[index];
-            String name = names[index];
-
-            this.addRenderableWidget(
-                    Button.builder(
-                                    Component.translatable(name),
-                                    button -> {
-                                        ClientConfig.ANCHOR.set(anchor);
-                                    }
-                            )
-                            .bounds(
-                                    startX
-                                            + index
-                                            * (PRESET_WIDTH + PRESET_GAP),
-                                    y,
-                                    PRESET_WIDTH,
-                                    BUTTON_HEIGHT
-                            )
-                            .build()
-            );
-        }
-    }
-
-    private void addAdjustmentButtons(
-            int centerX,
-            int y,
-            Runnable decrease,
-            Runnable increase
-    ) {
-        this.addRenderableWidget(
-                Button.builder(
-                                Component.literal("-"),
-                                button -> decrease.run()
-                        )
-                        .bounds(
-                                centerX - 115,
-                                y,
-                                40,
+                                actionWidth,
                                 BUTTON_HEIGHT
                         )
                         .build()
         );
 
+        Button next = Button.builder(
+                        Component.literal(">"),
+                        button -> changePage(1)
+                )
+                .bounds(
+                        bottomX + smallWidth + gap + actionWidth + gap + actionWidth + gap,
+                        bottomY,
+                        smallWidth,
+                        BUTTON_HEIGHT
+                )
+                .build();
+        next.active = this.page < this.pageCount - 1;
+        this.addRenderableWidget(next);
+    }
+
+    private void addElementToggle(int x, int y, int width, HudElement element) {
         this.addRenderableWidget(
                 Button.builder(
-                                Component.literal("+"),
-                                button -> increase.run()
+                                toggleLabel(element.displayName(), element.isEnabled()),
+                                button -> {
+                                    boolean enabled = !element.isEnabled();
+                                    element.configValue().set(enabled);
+                                    button.setMessage(toggleLabel(element.displayName(), enabled));
+                                }
                         )
-                        .bounds(
-                                centerX + 75,
-                                y,
-                                40,
-                                BUTTON_HEIGHT
-                        )
+                        .bounds(x, y, width, BUTTON_HEIGHT)
                         .build()
         );
     }
@@ -302,92 +226,52 @@ public final class InfoHudConfigScreen extends Screen {
     private void addToggle(
             int x,
             int y,
-            String name,
-            ForgeConfigSpec.BooleanValue configValue
+            int width,
+            String translationKey,
+            ForgeConfigSpec.BooleanValue value
     ) {
         this.addRenderableWidget(
                 Button.builder(
-                                toggleLabel(
-                                        name,
-                                        configValue.get()
-                                ),
+                                toggleLabel(Component.translatable(translationKey), value.get()),
                                 button -> {
-                                    boolean newValue =
-                                            !configValue.get();
-
-                                    configValue.set(newValue);
-
+                                    boolean enabled = !value.get();
+                                    value.set(enabled);
                                     button.setMessage(
-                                            toggleLabel(
-                                                    name,
-                                                    newValue
-                                            )
+                                            toggleLabel(Component.translatable(translationKey), enabled)
                                     );
                                 }
                         )
-                        .bounds(
-                                x,
-                                y,
-                                BUTTON_WIDTH,
-                                BUTTON_HEIGHT
-                        )
+                        .bounds(x, y, width, BUTTON_HEIGHT)
                         .build()
         );
     }
 
-    private static Component toggleLabel(
-            String name,
-            boolean enabled
-    ) {
-        return Component.translatable(name)
+    private static Component toggleLabel(Component name, boolean enabled) {
+        return name.copy()
                 .append(": ")
-                .append(
-                        Component.translatable(
-                                enabled ? "On" : "Off"
-                        )
-                );
+                .append(Component.translatable(enabled ? "On" : "Off"));
     }
 
-    private static void changeX(int amount) {
-        InfoHudOverlay.switchToCustomPosition();
-
-        int value =
-                ClientConfig.X.get() + amount;
-
-        ClientConfig.X.set(
-                Math.max(
-                        0,
-                        Math.min(10000, value)
-                )
-        );
+    private void openEditor() {
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(new HudEditorScreen(this));
+        }
     }
 
-    private static void changeY(int amount) {
-        InfoHudOverlay.switchToCustomPosition();
-
-        int value =
-                ClientConfig.Y.get() + amount;
-
-        ClientConfig.Y.set(
-                Math.max(
-                        0,
-                        Math.min(10000, value)
-                )
-        );
+    private void changePage(int direction) {
+        int nextPage = Math.max(0, Math.min(this.pageCount - 1, this.page + direction));
+        if (nextPage == this.page) {
+            return;
+        }
+        this.page = nextPage;
+        this.clearWidgets();
+        buildWidgets();
     }
 
-    private static void changeScale(double amount) {
-        double value =
-                ClientConfig.SCALE.get() + amount;
-
-        value = Math.max(
-                0.5D,
-                Math.min(3.0D, value)
-        );
-
-        value =
-                Math.round(value * 10.0D) / 10.0D;
-
+    private void changeScale(double amount) {
+        double value = ClientConfig.SCALE.get() + amount;
+        value = Math.max(0.5D, Math.min(3.0D, value));
+        value = Math.round(value * 10.0D) / 10.0D;
         ClientConfig.SCALE.set(value);
     }
 
@@ -395,54 +279,26 @@ public final class InfoHudConfigScreen extends Screen {
         ClientConfig.X.set(4);
         ClientConfig.Y.set(4);
         ClientConfig.SCALE.set(1.0D);
-        ClientConfig.ANCHOR.set(HudAnchor.TOP_LEFT);
-
         ClientConfig.SHOW_ICONS.set(true);
         ClientConfig.TEXT_SHADOW.set(true);
 
-        ClientConfig.SHOW_PLAYER_FPS.set(true);
-        ClientConfig.SHOW_PING.set(true);
-        ClientConfig.SHOW_TPS.set(true);
-        ClientConfig.SHOW_MEMORY.set(true);
-        ClientConfig.SHOW_SERVER_MEMORY.set(true);
-        ClientConfig.SHOW_POSITION.set(true);
-        ClientConfig.SHOW_FACING.set(true);
-        ClientConfig.SHOW_DIMENSION.set(true);
-        ClientConfig.SHOW_BIOME.set(true);
-        ClientConfig.SHOW_LIGHT.set(true);
-        ClientConfig.SHOW_WORLD_TIME.set(true);
-        ClientConfig.SHOW_PLAY_TIME.set(true);
-        ClientConfig.SHOW_SESSION.set(true);
-        ClientConfig.SHOW_JUMPS.set(true);
-
-        if (this.minecraft != null) {
-            this.minecraft.setScreen(
-                    new InfoHudConfigScreen(this.parent)
-            );
+        for (HudElement element : HudElement.values()) {
+            element.configValue().set(true);
         }
+
+        HudLayoutManager.resetAll();
+        this.page = 0;
+        this.clearWidgets();
+        buildWidgets();
     }
 
     private void saveAndClose() {
         if (ClientConfig.SPEC.isLoaded()) {
             ClientConfig.SPEC.save();
         }
-
         if (this.minecraft != null) {
             this.minecraft.setScreen(this.parent);
         }
-    }
-
-    private static String anchorName(
-            HudAnchor anchor
-    ) {
-        return switch (anchor) {
-            case CUSTOM -> "Custom";
-            case TOP_LEFT -> "Top left";
-            case TOP_CENTER -> "Top center";
-            case TOP_RIGHT -> "Top right";
-            case BOTTOM_LEFT -> "Bottom left";
-            case BOTTOM_RIGHT -> "Bottom right";
-        };
     }
 
     @Override
@@ -458,76 +314,54 @@ public final class InfoHudConfigScreen extends Screen {
             float partialTick
     ) {
         this.renderBackground(guiGraphics);
+        guiGraphics.fill(0, 0, this.width, 96, 0x70000000);
+        guiGraphics.fill(0, this.toggleStartY - 5, this.width, this.toggleBottomY, 0x35000000);
+        guiGraphics.fill(0, this.height - 29, this.width, this.height, 0x70000000);
 
         guiGraphics.drawCenteredString(
                 this.font,
                 this.title,
                 this.width / 2,
-                10,
-                0xFFFFFFFF
-        );
-
-        Component presetText =
-                Component.translatable("Position preset")
-                        .append(": ")
-                        .append(
-                                Component.translatable(
-                                        anchorName(
-                                                ClientConfig.ANCHOR.get()
-                                        )
-                                )
-                        );
-
-        guiGraphics.drawCenteredString(
-                this.font,
-                presetText,
-                this.width / 2,
-                28,
-                0xFFFFFFFF
-        );
-
-        guiGraphics.drawCenteredString(
-                this.font,
-                Component.translatable("Position X")
-                        .append(
-                                ": " + ClientConfig.X.get()
-                        ),
-                this.width / 2,
-                this.xRowY + 6,
-                0xFFFFFFFF
-        );
-
-        guiGraphics.drawCenteredString(
-                this.font,
-                Component.translatable("Position Y")
-                        .append(
-                                ": " + ClientConfig.Y.get()
-                        ),
-                this.width / 2,
-                this.yRowY + 6,
+                8,
                 0xFFFFFFFF
         );
 
         guiGraphics.drawCenteredString(
                 this.font,
                 Component.translatable("Scale")
-                        .append(
-                                ": " + String.format(
-                                        Locale.ROOT,
-                                        "%.1f",
-                                        ClientConfig.SCALE.get()
-                                )
-                        ),
+                        .copy()
+                        .append(": ")
+                        .append(String.format(Locale.ROOT, "%.1f", ClientConfig.SCALE.get())),
                 this.width / 2,
-                this.scaleRowY + 6,
+                55,
                 0xFFFFFFFF
         );
 
-        super.render(
-                guiGraphics,
-                mouseX,
-                mouseY,
-                partialTick
+        guiGraphics.drawCenteredString(
+                this.font,
+                Component.translatable("GUI profile")
+                        .copy()
+                        .append(": ")
+                        .append(Integer.toString(HudLayoutManager.currentGuiScale()))
+                        .append("x"),
+                this.width / 2,
+                89,
+                0xFFB8C7E0
         );
+
+        guiGraphics.drawCenteredString(
+                this.font,
+                Component.translatable("Page")
+                        .copy()
+                        .append(": ")
+                        .append(Integer.toString(this.page + 1))
+                        .append(" / ")
+                        .append(Integer.toString(this.pageCount)),
+                this.width / 2,
+                this.height - 34,
+                0xFFB8C7E0
+        );
+
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 }

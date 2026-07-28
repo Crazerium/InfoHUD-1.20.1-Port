@@ -2,20 +2,7 @@
   "Toggle InfoHUD": "Показать или скрыть InfoHUD",
   "Open InfoHUD settings": "Открыть настройки InfoHUD",
   "InfoHUD": "InfoHUD",
-
   "HUD Settings": "Настройки InfoHUD",
-  "Position preset": "Положение HUD",
-  "Position X": "Позиция X",
-  "Position Y": "Позиция Y",
-  "Scale": "Масштаб",
-
-  "Custom": "Вручную",
-  "Top left": "Слева сверху",
-  "Top center": "По центру сверху",
-  "Top right": "Справа сверху",
-  "Bottom left": "Слева снизу",
-  "Bottom right": "Справа снизу",
-
   "Show icons": "Показывать иконки",
   "Text shadow": "Тень текста",
   "Show player and FPS": "Игрок и FPS",
@@ -32,9 +19,17 @@
   "Show play time": "Показывать общий плейтайм",
   "Show session": "Показывать время сессии",
   "Show jumps": "Показывать прыжки",
-
   "On": "Вкл",
   "Off": "Выкл",
-  "Reset": "Сбросить",
-  "Done": "Готово"
+  "Reset": "Сбросить всё",
+  "Done": "Готово",
+  "Open layout editor": "Открыть редактор расположения",
+  "GUI profile": "Профиль GUI",
+  "Page": "Страница",
+  "InfoHUD Editor": "Редактор InfoHUD",
+  "Left-click to drag, right-click to reset an element": "ЛКМ — перетащить, ПКМ — сбросить элемент",
+  "Layout profile for GUI": "Профиль расположения для GUI",
+  "Save": "Сохранить",
+  "Reset layout": "Сбросить раскладку",
+  "Cancel": "Отмена"
 }
